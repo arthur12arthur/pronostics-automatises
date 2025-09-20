@@ -5,7 +5,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # ⚙️ Google Sheets configuration
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets", 
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets",
           "https://www.googleapis.com/auth/drive"]
 
 # 🔑 Charger les credentials depuis le fichier JSON
@@ -16,7 +16,7 @@ gc = gspread.authorize(creds)
 sh = gc.create("Pronostics_Foot_Auto")
 worksheet = sh.get_worksheet(0)
 
-# 🌍 Simulation des données (à remplacer plus tard par API foot)
+# 🌍 Exemple de données (test)
 data = {
     "Match": ["Team A vs Team B", "Team C vs Team D"],
     "Pronostic": ["1", "Over 2.5"],
