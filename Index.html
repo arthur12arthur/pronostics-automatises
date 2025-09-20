@@ -4,70 +4,104 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Pronostics</title>
+
+  <!-- Couleur du thème (barre Android) -->
+  <meta name="theme-color" content="#1e3a8a">
+
+  <!-- Manifest PWA -->
   <link rel="manifest" href="manifest.json">
+
+  <!-- Icône pour navigateurs -->
+  <link rel="icon" href="icon-192.png" type="image/png">
+
+  <!-- Service Worker -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js")
+        .then(() => console.log("✅ Service Worker enregistré"))
+        .catch(err => console.log("❌ Erreur Service Worker :", err));
+    }
+  </script>
+
+  <!-- Style simple -->
   <style>
-    body { font-family: Arial, sans-serif; background:#f8f9fa; margin:0; padding:0; }
-    header { background:#007bff; color:white; padding:15px; text-align:center; }
-    table { width:100%; border-collapse:collapse; margin:20px auto; }
-    th, td { border:1px solid #ccc; padding:8px; text-align:center; }
-    th { background:#007bff; color:white; }
-    tr:nth-child(even) { background:#f2f2f2; }
-    .container { padding:10px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9fafb;
+      color: #1f2937;
+    }
+    header {
+      background: #1e3a8a;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    table th, table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    table th {
+      background: #3b82f6;
+      color: white;
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>⚽ Dashboard Pronostics</h1>
+    <h1>📊 Dashboard Pronostics</h1>
   </header>
-  <div class="container">
-    <table id="dataTable">
+
+  <main>
+    <table id="data-table">
       <thead>
         <tr>
-          <th>Ligue</th>
-          <th>Domicile</th>
-          <th>Extérieur</th>
-          <th>Date</th>
-          <th>Heure</th>
+          <th>Match</th>
           <th>Pronostic</th>
+          <th>Cote</th>
         </tr>
       </thead>
-      <tbody></tbody>
+      <tbody>
+        <tr><td colspan="3">Chargement en cours...</td></tr>
+      </tbody>
     </table>
-  </div>
+  </main>
 
+  <!-- Script pour récupérer données Google Sheets -->
   <script>
-    // ✅ Ton Google Sheets (format CSV)
-    const sheetUrl = "https://docs.google.com/spreadsheets/d/1nas5Fa3fsO6MM_WlsZWmOlAEsJ7df5iMTrcTEyIRZbE/export?format=csv";
+    const sheetId = "1nas5Fa3fsO6MM_WlsZWmOlAEsJ7df5iMTrcTEyIRZbE";
+    const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
 
-    async function loadData() {
-      try {
-        const response = await fetch(sheetUrl);
-        const data = await response.text();
-        const rows = data.split("\n").map(r => r.split(","));
-        
-        let tableBody = document.querySelector("#dataTable tbody");
-        tableBody.innerHTML = "";
+    fetch(sheetUrl)
+      .then(res => res.text())
+      .then(text => {
+        const json = JSON.parse(text.substr(47).slice(0, -2));
+        const rows = json.table.rows;
+        const tbody = document.querySelector("#data-table tbody");
+        tbody.innerHTML = "";
 
-        for (let i = 1; i < rows.length; i++) {
-          let row = rows[i];
-          if(row.length < 5) continue;
-          let tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${row[0]}</td>
-            <td>${row[1]}</td>
-            <td>${row[2]}</td>
-            <td>${row[3]}</td>
-            <td>${row[4]}</td>
-            <td>${row[5] || ""}</td>
-          `;
-          tableBody.appendChild(tr);
-        }
-      } catch (e) {
-        console.error("Erreur de chargement des données:", e);
-      }
-    }
-
-    loadData();
+        rows.forEach(row => {
+          const tr = document.createElement("tr");
+          row.c.forEach(cell => {
+            const td = document.createElement("td");
+            td.textContent = cell ? cell.v : "";
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        document.querySelector("#data-table tbody").innerHTML =
+          `<tr><td colspan="3">❌ Erreur de chargement</td></tr>`;
+        console.error("Erreur Google Sheets :", err);
+      });
   </script>
 </body>
 </html>
